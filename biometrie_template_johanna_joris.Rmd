@@ -1,0 +1,436 @@
+---
+title: "Biometrie onderzoek"
+authors: "Johanna Veenstra, Joris Deelstra"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    css: style.css
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+# DON'T TOUCH THIS
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(ggplot2)
+
+```
+
+## Inleiding
+
+GEEF EEN HEEL KORTE INLEINDING VAN JE ONDERZOEK
+
+::: info
+Het staat je vrij een ander simpel te meten biometrisch kenmerk te onderzoeken.
+Voorwaarde is wel dat je twee aspecten meet (bv lichaamslengte en hoofdomtrek) en hun relatie onderzoekt, en ook dat je verschillende groepen onderzoekt (man/vrouw, jong/oud etc.).
+Ten slotte moeten verschillende studenten het meetwerk afwisselen en ook dat moet vastgelegd worden.
+:::
+
+::: attention
+Verschilt de gemiddelde handgrootte tussen een man en een vrouw?
+:::
+
+::: attention
+Wij denken dat de handen van een man gemiddeld groter zijn dan die van vrouwen.
+:::
+
+::: attention
+Er zit geen verschil in gemiddelde handgrootte bij mannen en vrouwen.
+:::
+
+### Ontwerp van het experiment
+
+> Voor het verzamelen van de benodigde data hebben wij 33 proefpersonen gevraagd om hun handen te meten.
+> Wij hebben willekeurig gevraagd en de ratio van man/vrouw ongeveer gelijk gehouden (17 vrouwen, 16 mannen).
+
+### Ontwerp het protocol
+
+::: protocol
+#### Protocol voor meting handlengte en handbreedte
+
+##### Benodigdheden
+
+1.  Maatlat, schuifmaat of meetlint.\
+2.  Spreadsheet om resultaten vast te leggen, met toegang hiertoe op locaties zonder internet-toegang.\
+3.  Je laborant-ID: een unieke *identifier* die jou als onderzoeker identificeert. Neem hiervoor de laatste 4 cijfers van je studentnummer.
+
+##### Data verzamelen
+
+Zoek, samen met een ander groepje van je klas, in of rond het schoolgebouw medestudenten.
+Vraag beleefd of ze willen participeren in een klein wetenschappelijk onderzoekje voor school waarbij de maten van de hand opgenomen zullen worden.\
+Is het antwoord nee, dan groet je vriendelijk en zoek je verder.\
+Is het antwoord ja, dan vraag je of de proefpersoon de hand horizontaal en gestrekt wil houden met de palm naar beneden.
+Vervolgens meet je zowel de lengte als de breedte van de hand op, in millimeters.
+Deze leg je vast in de spreadsheet, samen met je laborant-ID en een identifier (géén naam!) van de proefpersoon.
+Ten slotte vraag je aan de proefpersoon zijn/haar/hun sexe en legt deze vast.
+Wil de proefpersoon deze niet geven, of is die nonbinair, dan leg je dit vast als "anders/onbekend".
+Het "parallel groepje" (dat niet jouw bevindingen mag horen) doet dezelfde meting en slaat deze met dezelfde participant identifier op.\
+Bedank de proefpersoon voor deelname.\
+Wissel de metingen af tussen de verschillende studenten in jouw groepje.
+
+Ga door totdat van voldoende proefpersonen de gegevens zijn verzameld.
+:::
+
+## Uitvoering
+
+::: attention
+Je moet de onderzoeksresultaten in deze vorm opslaan:
+
+```{=html}
+<pre>
+laborant_ID,subject_ID,handlengte,handbreedte,sexe
+3241,G1_03,113,104,m
+<meer rijen met data>
+</pre>
+```
+:::
+
+## Analyse
+
+### Lees je eigen data in
+
+Om data vanuit een tekstbestand in te lezen kan je dit codeblok gebruiken, aannemend dat je data er exact zo uitzien als in bovenstaande voorbeeld:
+
+```{r demo-data-inlees, eval=FALSE}
+data_file <- "hand_data.csv"
+
+#data format: laborant_ID,subject_ID,handlengte,handbreedte,sexe
+biometric_data <- read.table(file = data_file,
+                        header = TRUE,
+                        sep = ";")
+
+```
+
+```         
+```
+
+Let op: als je missende data hebt moet je die specificeren door dit argument toe te voegen: `na.strings = "<jouw NA symbool>"`
+
+### Beschrijvende statistiek
+
+LAAT ENKELE BESCHRIJVENDE STATISTISCHE WAARDES ZIEN. GEEF EEN OF MEERDERE BOXPLOTS EN HISTOGRAMMEN BESPREEK DEZE DATA EN FIGUREN KORT. KAN JE IETS ZEGGEN OVER DE DATAVERDELING?
+
+### Lengte breedte ratio toevoegen aan de kolom
+
+Dit stukje code voegt een extra kolom toe met de lengte breedte ratio.
+
+```{r}
+biometric_data$ratio <- biometric_data$handlengte / biometric_data$handbreedte
+head(biometric_data)
+
+```
+
+### Gemiddelde per geslacht
+
+Hieronder word het gemiddelde berekent van hand breedte en lengte per geslacht.
+
+```{r}
+
+biometric_data$sex <- as.factor(biometric_data$sex)
+biometric_data$handlengte <- as.integer(biometric_data$handlengte)
+biometric_data$handbreete <- as.integer(biometric_data$handbreedte)
+
+# controleren of de levels inderdaad op M en V staan
+levels(biometric_data$sex)
+
+# berekent het gemiddelde van lengte
+l_vrouw <-mean(biometric_data$handlengte[biometric_data$sex == "V" ])
+l_man <-mean(biometric_data$handlengte[biometric_data$sex== "M"])
+cat(l_vrouw,"gemiddelde handlengte van vrouw","\n",l_man,"gemiddelde handlengte van man\n")
+
+
+# berekent het gemiddelde van breedte
+b_vrouw <-mean(biometric_data$handbreedte[biometric_data$sex == "V" ])
+b_man <-mean(biometric_data$handbreete[biometric_data$sex== "M"])
+cat(b_vrouw,"gemiddelde handbreedte van vrouw","\n",b_man,"gemiddelde handbreedte van man")
+
+```
+
+```{r}
+#split over gender into list of dataframes
+gender_split_data <- split(x = biometric_data,
+      f = biometric_data$sexe)
+
+#apply a function to report means of both measurements
+sapply(X = gender_split_data,
+       FUN = function(x){
+           c(handlengte = mean(x$handlengte),
+             handbreedte = mean(x$handbreedte),
+             ratio = mean(x$ratio))
+       })
+```
+
+### Plots
+
+```{r}
+library(ggplot2)
+# maak de plot en voeg lagen toe
+ggplot(data = biometric_data,
+       mapping = aes(x = sexe, y = handlengte, fill = sexe)) +
+    geom_boxplot() +                            # boxplot visualisatie
+    labs(x = "Sexe", y = "hand lengte (mm)") +  # as-labels
+    theme_minimal()  
+```
+
+```{r}
+#library(ggplot2) #hoeft niet nog een keer!
+# maak de plot en voeg lagen toe
+ggplot(data = biometric_data,
+       mapping = aes(x = sexe, y = handbreedte, fill = sexe)) +
+    geom_boxplot() +                            # boxplot visualisatie
+    geom_point() +                              # met punten erbij
+    labs(x = "Sexe", y = "hand breedte (mm)") + # as-labels
+    theme_minimal()   
+```
+
+### Welke verdeling?
+
+Hoe zit het nu met de verdeling van onze hand biometrie?
+Dat kan je op verschillende manieren benaderen.
+Visueel kan dit met *histogram* of *density plot*.
+Hier zie je beide, voor de `ratio` kolom.
+
+```{r}
+ggplot(data = biometric_data,
+       mapping = aes(x = ratio, fill = sexe)) +
+    geom_histogram(bins = 10, colour = "black") + # histogram layer with 10 bins
+    facet_wrap(. ~ sexe) +                       # split plots over gender
+    labs(x = "handlengte/handbreedte ratio") +
+    theme_minimal()
+```
+
+Hoe kleiner de steekproefgrootte (*sample size*) hoe lastiger het is de onderliggende verdeling vast te stellen.
+Speel maar eens met dit blokje code, en verander de steekproefgrootte (`n=`) in de `rnorm()` functie en de `breaks=` in de `hist()` functie.
+Neem voor *n* bijvoorbeeld achtereenvolgens 10, 100, 1000, 10000, 10000 en voor *breaks* 5, 10, 50.
+Wanneer zie je een echte normaalverdeling verschijnen?
+
+::: attention
+**Dit *experiment* met de argumenten van `rnorm()` en `hist()` moet je opnemen in je eigen RMarkdown.**\
+Beantwoord deze vragen:
+
+1.  Wat gebeurt er met de vorm van de verdeling als `n` groter wordt? \_de verdeling van de kolom zou meer lijken op een normale verdeling.Dit komt door de limietstelling.
+
+```{r}
+hist_data <- data.frame(x = rnorm(n = 100))
+ggplot(data = hist_data,
+       mapping = aes(x = x)) +
+    geom_histogram(bins = 10, fill = "gold", colour = "black") +
+    theme_minimal()
+```
+
+2.  Wat gebeurt er met de spreiding van de data (x-as) als `n` groter wordt, en kan je dat verklaren?
+    De spreiding neemt af, omdat er meer data punten.
+    1 punt heeft dus minder invloed.
+
+    De spreiding van de steekproefgemiddelde neemt af, uiteindelijk krijg je minder spreiding hiertussen en dat zie je ook in het plot.
+
+    ```{r}
+    hist_data <- data.frame(x = rnorm(n = 150))
+    ggplot(data = hist_data,
+           mapping = aes(x = x)) +
+        geom_histogram(bins = 10, fill = "gold", colour = "black") +
+        theme_minimal()
+
+    ```
+
+3.  Waarom is bij zelfde instellingen voor `n` en `breaks` de uitkomst toch verschillend?
+    vanwege de willekeurigheid in gegenereerde data.
+
+    Dat komt vanwege de willekeurigheid...elke steekproef representeert een andere set van de proef.
+
+4.  Welke minimale `n` geeft het meeste kans om een echte normaalverdeling te zien?
+
+    minimaal 30
+
+5.  Wat voor bijzonders is er aan de hand met het `breaks` argument?
+    Geeft de documentatie daar een verklaring voor?
+    bepaald waar onderbrekingen (ticks) op de assen van de grafiek verschijnen.
+    Dit helpt vooral bij het aanpassen van de assen.
+
+    de ggplot2 kan breaks op specifieke locaties voor de assen defineren.
+    Dit is nuttig voor leesbaarheid en interpertatie van de grafiek.
+
+    How to Set Axis Breaks in ggplot2 (With Examples), dit is een link naar de website waar ik dit gevonden heb.
+:::
+
+Ook kan ggplot2 gebruikt worden om beide variabelen uit te splitsen,
+
+9190 = Johanna
+
+5614 = Joris
+
+```{r}
+ggplot(data = biometric_data,
+       mapping = aes(x = sexe, y = handlengte)) +
+    geom_boxplot(fill = "darkgreen") +
+    facet_wrap(. ~ laborant_ID) +
+    ylab("hand lengte (mm)") +
+    theme_linedraw()
+```
+
+### Bronnen van variatie
+
+ONDERZOEK BRONNEN VAN VARIATIE BESPREEK DIT KORT
+
+### De hypothese aannemen?
+
+VOER RELEVANTE STATISTISCHE TESTS UIT
+
+## Reflectie op het experiment
+
+::: info
+Bespreek in je groep de volgende vragen en voeg de antwoorden toe aan je uitgewerkte onderzoeksdocument.
+
+1.  Zijn de metingen tussen de verschillende meters ook (significant) verschillend?
+    Zo ja, waardoor zou je de verschillen kunnen verklaren?
+
+2.  Onderzoek de verschillen tussen mannen en vrouwen met betrekking tot hand lengte, handbreedte en de ratio.
+
+3.  Zou je het protocol aanpassen na deze ervaring, of was hij voldoende duidelijk en reproduceerbaar?
+:::
+
+# Onze data verwerkt
+
+```{r}
+laboranten <- unique(biometric_data$laborant_ID)
+
+# Per laborant samenvatten
+for (lab in laboranten) {
+  cat("\nLaborant:", lab, "\n")
+  
+  lab_data <- biometric_data[biometric_data$laborant_ID == lab, ]
+  
+  cat("Handlengte - Mean:", mean(lab_data$handlengte), 
+      "SD:", sd(lab_data$handlengte),
+      "Median:", median(lab_data$handlengte),
+      "IQR:", IQR(lab_data$handlengte),
+      "Min:", min(lab_data$handlengte),
+      "Max:", max(lab_data$handlengte), "\n")
+  
+  cat("Handbreedte - Mean:", mean(lab_data$handbreedte), 
+      "SD:", sd(lab_data$handbreedte),
+      "Median:", median(lab_data$handbreedte),
+      "IQR:", IQR(lab_data$handbreedte),
+      "Min:", min(lab_data$handbreedte),
+      "Max:", max(lab_data$handbreedte), "\n")
+}
+```
+
+```{r}
+# Boxplot handlengte per laborant
+boxplot(handlengte ~ laborant_ID, data = biometric_data, main = "Handlengte per Laborant", xlab = "Laborant", ylab = "Handlengte")
+
+# Boxplot handbreedte per laborant
+boxplot(handbreedte ~ laborant_ID, data = biometric_data, main = "Handbreedte per Laborant", xlab = "Laborant", ylab = "Handbreedte")
+
+```
+
+```{r}
+for (lab in laboranten) {
+  cat("\nLaborant:", lab, "\n")
+  
+  lab_data <- biometric_data[biometric_data$laborant_ID == lab, ]
+  
+  cat("Shapiro-Wilk test handlengte:\n")
+  print(shapiro.test(lab_data$handlengte))
+  
+  cat("Shapiro-Wilk test handbreedte:\n")
+  print(shapiro.test(lab_data$handbreedte))
+  
+  # QQ-plot handlengte
+  qqnorm(lab_data$handlengte, main = paste("QQ-plot handlengte - Laborant", lab))
+  qqline(lab_data$handlengte)
+  
+  # QQ-plot handbreedte
+  qqnorm(lab_data$handbreedte, main = paste("QQ-plot handbreedte - Laborant", lab))
+  qqline(lab_data$handbreedte)
+}
+```
+
+# Andere groep hun data verwerkt
+```{r demo-data-inlees, eval=FALSE}
+data_file <- "hand_data_2e_groep.csv"
+
+#data format: laborant_ID,subject_ID,handlengte,handbreedte,sexe
+biometric_data <- read.table(file = data_file,
+                        header = TRUE,
+                        sep = ";")
+head(biometric_data)
+str(biometric_data)
+
+```
+
+```{r}
+laboranten <- unique(biometric_data$laborant_ID)
+
+# Per laborant samenvatten
+for (lab in laboranten) {
+  cat("\nLaborant:", lab, "\n")
+  
+  lab_data <- biometric_data[biometric_data$laborant_ID == lab, ]
+  
+  cat("Handlengte - Mean:", mean(lab_data$handlengte), 
+      "SD:", sd(lab_data$handlengte),
+      "Median:", median(lab_data$handlengte),
+      "IQR:", IQR(lab_data$handlengte),
+      "Min:", min(lab_data$handlengte),
+      "Max:", max(lab_data$handlengte), "\n")
+  
+  cat("Handbreedte - Mean:", mean(lab_data$handbreedte), 
+      # "SD:", sd(lab_data$handbreedte),
+      "Median:", median(lab_data$handbreedte),
+      "IQR:", IQR(lab_data$handbreedte),
+      "Min:", min(lab_data$handbreedte),
+      "Max:", max(lab_data$handbreedte), "\n")
+}
+```
+
+```{r}
+# Boxplot handlengte per laborant
+boxplot(handlengte ~ laborant_ID, data = biometric_data, main = "Handlengte per Laborant", xlab = "Laborant", ylab = "Handlengte")
+
+# Boxplot handbreedte per laborant
+boxplot(handbreedte ~ laborant_ID, data = biometric_data, main = "Handbreedte per Laborant", xlab = "Laborant", ylab = "Handbreedte")
+
+```
+
+```{r}
+for (lab in laboranten) {
+  cat("\nLaborant:", lab, "\n")
+  
+  lab_data <- biometric_data[biometric_data$laborant_ID == lab, ]
+  
+  cat("Shapiro-Wilk test handlengte:\n")
+  print(shapiro.test(lab_data$handlengte))
+  
+  cat("Shapiro-Wilk test handbreedte:\n")
+  print(shapiro.test(lab_data$handbreedte))
+  
+  # QQ-plot handlengte
+  qqnorm(lab_data$handlengte, main = paste("QQ-plot handlengte - Laborant", lab))
+  qqline(lab_data$handlengte)
+  
+  # QQ-plot handbreedte
+  qqnorm(lab_data$handbreedte, main = paste("QQ-plot handbreedte - Laborant", lab))
+  qqline(lab_data$handbreedte)
+}
+```
+
+::: attention
+#### Wat je moet inleveren
+
+Voor de verwerking en analyse van je eigen data maak je gebruik van het aangeleverde template RMarkdown document.
+Daarin doorloop je dezelfde onderzoek stappen als hieronder, maar dan met je eigen data.
+Aan het einde van de dag gaat dat document, in originele en "geknitte" vorm, samen met je databestand, in een git repo die is opgezet volgens voorschift in de cursushandleiding.
+De link hiernaar toe gaat in je portfolio op eJournal.
+Let op dat je *alle* stappen hebt doorlopen voordat je inlevert.
+Gebruik ook de RStudio spellingscontrole!\
+Vergeet niet jullie namen en studentnummers bovenaan de markdown te zetten!
+:::
